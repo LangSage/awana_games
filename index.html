@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🎮 Библиотека игр + План на субботу</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="dark light" />
+
+  <style>
+    dialog::backdrop { background: rgba(0,0,0,.55); }
+  </style>
+</head>
+<body class="min-h-screen bg-zinc-950 text-zinc-100">
+  <div class="max-w-6xl mx-auto p-4 sm:p-6">
+
+    <!-- Header -->
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div class="space-y-1">
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">🎮 Библиотека игр</h1>
+        <p class="text-sm text-zinc-400">
+          Cache-first: сначала берём данные из браузера, потом обновляем только если CSV поменялся.
+        </p>
+        <p class="text-xs text-zinc-500">
+          Last sync: <span id="lastSync" class="text-zinc-300">—</span>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="netPill" class="text-xs px-2.5 py-1 rounded-full border border-zinc-700 bg-zinc-800 text-zinc-200">cached/idle</span>
+        <button id="btnRefresh" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">
+          ⟳ Обновить
+        </button>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="mt-5 flex flex-wrap gap-2">
+      <button data-tab="library" class="tabBtn px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium">📚 Каталог</button>
+      <button data-tab="plan" class="tabBtn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">🗓️ План</button>
+      <button data-tab="history" class="tabBtn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">🧾 История</button>
+      <button data-tab="settings" class="tabBtn px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">⚙️ Настройки</button>
+    </nav>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden mt-4 text-sm px-3 py-2 rounded-xl border"></div>
+
+    <!-- Content -->
+    <main class="mt-4">
+
+      <!-- LIBRARY -->
+      <section id="tab-library" class="tabPanel">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <label class="block">
+                <div class="text-xs text-zinc-400">Поиск</div>
+                <input id="searchInput" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+                       placeholder="название / описание / инвентарь" />
+              </label>
+
+              <label class="block">
+                <div class="text-xs text-zinc-400">Интерес</div>
+                <select id="interestFilter" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="">все</option>
+                  <option value="5">5</option>
+                  <option value="4">4+</option>
+                  <option value="3">3+</option>
+                  <option value="2">2+</option>
+                  <option value="1">1+</option>
+                </select>
+              </label>
+
+              <label class="block">
+                <div class="text-xs text-zinc-400">Сортировка</div>
+                <select id="sortSelect" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="name">по названию</option>
+                  <option value="interest_desc">по интересу ↓</option>
+                  <option value="last_played_asc">давно не играли ↑</option>
+                  <option value="last_played_desc">недавно играли ↓</option>
+                </select>
+              </label>
+
+              <label class="block">
+                <div class="text-xs text-zinc-400">Инвентарь содержит</div>
+                <input id="arsenalFilter" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+                       placeholder="например: обручи" />
+              </label>
+            </div>
+
+            <div class="flex gap-2">
+              <button id="btnNewGame" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-600 transition text-sm font-medium">
+                + Добавить игру
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-4 text-xs text-zinc-500">
+            Показано: <span id="countShown">0</span> / <span id="countTotal">0</span>
+          </div>
+
+          <div id="gamesGrid" class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        </div>
+      </section>
+
+      <!-- PLAN -->
+      <section id="tab-plan" class="tabPanel hidden">
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div class="xl:col-span-2 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
+                <label class="block">
+                  <div class="text-xs text-zinc-400">Суббота</div>
+                  <input id="planDate" type="date" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"/>
+                </label>
+                <label class="block">
+                  <div class="text-xs text-zinc-400">Заметка</div>
+                  <input id="planNote" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+                         placeholder="например: больше активных игр" />
+                </label>
+              </div>
+
+              <div class="flex gap-2">
+                <button id="btnLoadPlan" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">
+                  ⤓ Загрузить (если есть)
+                </button>
+                <button id="btnSavePlan" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-600 transition text-sm font-medium">
+                  💾 Сохранить план
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Игры в плане</h2>
+                <div class="text-xs text-zinc-400">game_ids_json сохраняется в Google Form</div>
+              </div>
+
+              <div id="planList" class="mt-3 space-y-2"></div>
+
+              <div class="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
+                <div class="text-xs text-zinc-400">game_ids_json</div>
+                <div id="planJsonPreview" class="mt-1 text-xs text-zinc-200 break-all select-text">[]</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold">Подсказки</h2>
+              <button id="btnPickNextSat" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">
+                🎯 След. суббота
+              </button>
+            </div>
+            <p class="text-sm text-zinc-400 mt-1">
+              Подсветка: <span class="text-emerald-200">давно не было</span> / <span class="text-rose-200">было недавно</span>.
+            </p>
+
+            <div class="mt-4 space-y-3">
+              <div class="rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
+                <div class="text-xs text-zinc-400 mb-2">Давно не играли (топ 8)</div>
+                <div id="staleList" class="space-y-1"></div>
+              </div>
+
+              <div class="rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
+                <div class="text-xs text-zinc-400 mb-2">Было недавно (последние ~14 дней)</div>
+                <div id="recentList" class="space-y-1"></div>
+              </div>
+
+              <div class="rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
+                <div class="text-xs text-zinc-400 mb-2">Быстро добавить</div>
+                <input id="quickAddSearch" class="w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+                       placeholder="поиск игры для добавления..." />
+                <div id="quickAddResults" class="mt-2 max-h-72 overflow-auto space-y-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section id="tab-history" class="tabPanel hidden">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">История планов</h2>
+              <p class="text-sm text-zinc-400">Canonical: одна строка на дату (latest wins).</p>
+            </div>
+            <div class="flex gap-2">
+              <button id="btnExportJson" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">
+                ⤓ Экспорт JSON
+              </button>
+            </div>
+          </div>
+
+          <div id="historyGrid" class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="tab-settings" class="tabPanel hidden">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
+          <h2 class="text-lg font-semibold">Настройки</h2>
+          <p class="text-sm text-zinc-400">
+            Чтение идёт из canonical CSV. Кэш лежит в вашем браузере (localStorage).
+          </p>
+
+          <div class="rounded-xl border border-zinc-800 bg-zinc-950/40 p-3 text-sm text-zinc-300">
+            <div class="font-medium text-zinc-100">Сейчас используются:</div>
+            <ul class="mt-2 list-disc pl-5 space-y-1 text-zinc-300">
+              <li><span class="text-zinc-200">Games CSV</span>: <span id="cfgGamesCsv" class="text-zinc-400 break-all"></span></li>
+              <li><span class="text-zinc-200">Plans CSV</span>: <span id="cfgPlansCsv" class="text-zinc-400 break-all"></span></li>
+              <li><span class="text-zinc-200">Games formResponse</span>: <span id="cfgGamesPost" class="text-zinc-400 break-all"></span></li>
+              <li><span class="text-zinc-200">Plans formResponse</span>: <span id="cfgPlansPost" class="text-zinc-400 break-all"></span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Hidden iframes/forms for silent submit -->
+    <iframe name="hidden_iframe_games" class="hidden"></iframe>
+    <iframe name="hidden_iframe_plans" class="hidden"></iframe>
+
+    <form id="hiddenGamesForm" class="hidden" target="hidden_iframe_games" method="POST">
+      <input id="g_action" name="entry.1767816850" />
+      <input id="g_id"     name="entry.1759094494" />
+      <input id="g_name"   name="entry.508087423" />
+      <input id="g_ars"    name="entry.1459332776" />
+      <input id="g_desc"   name="entry.558105026" />
+      <input id="g_int"    name="entry.27841332" />
+    </form>
+
+    <form id="hiddenPlansForm" class="hidden" target="hidden_iframe_plans" method="POST">
+      <input id="p_date" name="entry.727761715" />
+      <input id="p_note" name="entry.506410526" />
+      <input id="p_json" name="entry.948769888" />
+    </form>
+
+    <!-- Game modal -->
+    <dialog id="gameDialog" class="rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-100 w-[min(680px,96vw)] p-0">
+      <div class="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between">
+        <div class="space-y-0.5">
+          <div id="dlgTitle" class="text-lg font-semibold">Игра</div>
+          <div class="text-xs text-zinc-400">Сохранение = UPSERT/DELETE в форму “Games”.</div>
+        </div>
+        <button id="dlgClose" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 transition text-sm">✕</button>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label class="block">
+            <div class="text-xs text-zinc-400">ID (уникальный)</div>
+            <input id="dlg_id" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+          </label>
+
+          <label class="block">
+            <div class="text-xs text-zinc-400">Интерес (1–5)</div>
+            <select id="dlg_interest" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="5">5</option>
+              <option value="4">4</option>
+              <option value="3" selected>3</option>
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="block">
+          <div class="text-xs text-zinc-400">Название</div>
+          <input id="dlg_name" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+        </label>
+
+        <label class="block">
+          <div class="text-xs text-zinc-400">Инвентарь</div>
+          <input id="dlg_arsenal" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+                 placeholder="например: обручи, мяч" />
+        </label>
+
+        <label class="block">
+          <div class="text-xs text-zinc-400">Описание</div>
+          <textarea id="dlg_desc" rows="4" class="mt-1 w-full rounded-xl bg-zinc-950/60 border border-zinc-800 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        </label>
+      </div>
+
+      <div class="p-4 sm:p-5 border-t border-zinc-800 flex flex-wrap gap-2 justify-end">
+        <button id="dlgDelete" class="px-3 py-2 rounded-xl bg-rose-700 hover:bg-rose-600 active:bg-rose-700 transition text-sm hidden">
+          🗑️ Удалить
+        </button>
+        <button id="dlgSave" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-600 transition text-sm font-medium">
+          ✅ Сохранить
+        </button>
+      </div>
+    </dialog>
+
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

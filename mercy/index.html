@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Стройгород</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="gameRoot" class="game-root">
+    <div class="hud-overlay">
+      <div class="stat-pill"><span class="stat-label">Бюджет</span><strong id="budgetValue">0 ₽</strong></div>
+      <div class="stat-pill"><span class="stat-label">Время</span><strong id="timeValue">00:00</strong></div>
+      <div class="stat-pill"><span class="stat-label">Построено</span><strong id="builtValue">0/0</strong></div>
+      <div class="stat-pill"><span class="stat-label">Репутация</span><strong id="repValue">0%</strong></div>
+    </div>
+
+    <div class="corner-controls">
+      <button id="soundBtn" class="icon-btn" title="Звук">🔊</button>
+      <button id="restartBtn" class="icon-btn" title="Сначала">↻</button>
+    </div>
+
+    <div id="mapViewport" class="map-viewport">
+      <div id="world" class="world"></div>
+      <div id="siteMenu" class="site-menu hidden">
+        <div class="site-menu-head">
+          <div class="site-menu-title" id="siteMenuTitle">Бригада</div>
+          <div class="site-menu-sub" id="siteMenuSub">0%</div>
+        </div>
+        <div id="siteWorkersList" class="site-workers-list"></div>
+        <div class="site-menu-actions">
+          <button id="promoteBtn" class="site-btn promote">⬆️ Повысить</button>
+          <button id="replaceBtn" class="site-btn replace">🔁 Заменить</button>
+          <button id="fireBtn" class="site-btn fire">❌ Уволить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="startOverlay" class="overlay show">
+    <div class="overlay-card start-card">
+      <div class="start-city">🏗️🏘️🚚</div>
+      <button id="startBtn" class="big-btn">Старт</button>
+    </div>
+  </div>
+
+  <div id="endOverlay" class="overlay">
+    <div class="overlay-card end-card">
+      <div class="end-title">Статистика</div>
+      <div id="statsGrid" class="stats-grid"></div>
+      <div class="end-actions">
+        <button id="playAgainBtn" class="big-btn">Ещё раз</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

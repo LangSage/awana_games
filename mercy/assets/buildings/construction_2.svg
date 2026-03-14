@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="180" viewBox="0 0 160 180">
+    <rect width="160" height="180" fill="none"/>
+    <ellipse cx="80" cy="164" rx="58" ry="12" fill="#000" opacity=".08"/>
+    <rect x="24" y="38" width="112" height="118" rx="14" fill="#dfe6ef"/>
+    <rect x="40" y="86" width="80" height="70" rx="10" fill="#f59e0b" opacity=".85"/>
+    <g stroke="#64748b" stroke-width="4">
+      <line x1="28" y1="38" x2="28" y2="156"/>
+      <line x1="132" y1="38" x2="132" y2="156"/>
+      <line x1="52" y1="38" x2="52" y2="156"/>
+      <line x1="108" y1="38" x2="108" y2="156"/>
+      <line x1="28" y1="66" x2="132" y2="66"/>
+      <line x1="28" y1="96" x2="132" y2="96"/>
+      <line x1="28" y1="126" x2="132" y2="126"/>
+      <line x1="28" y1="156" x2="132" y2="156"/>
+      <line x1="28" y1="38" x2="52" y2="66"/>
+      <line x1="52" y1="66" x2="28" y2="96"/>
+      <line x1="28" y1="96" x2="52" y2="126"/>
+      <line x1="52" y1="126" x2="28" y2="156"/>
+      <line x1="132" y1="38" x2="108" y2="66"/>
+      <line x1="108" y1="66" x2="132" y2="96"/>
+      <line x1="132" y1="96" x2="108" y2="126"/>
+      <line x1="108" y1="126" x2="132" y2="156"/>
+    </g>
+    <rect x="12" y="24" width="136" height="16" rx="8" fill="#f59e0b"/>
+    <path d="M90 26 L126 10 L126 24 L148 24 L148 30 L126 30 L126 58 L90 58 Z" fill="#facc15"/>
+    </svg>
